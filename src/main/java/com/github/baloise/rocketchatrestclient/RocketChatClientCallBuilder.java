@@ -36,7 +36,11 @@ public class RocketChatClientCallBuilder {
     private String sha256password;
     private String authToken;
     private String userId;
-
+    private final String serviceName;
+    private final String secret;
+    private final int expiresIn;
+    private final  String accessToken;
+    private final boolean oauth2Selected ;
     //- http://localhost:3000
     //- http://localhost:3000/
     //- http://localhost:3000/api
@@ -49,9 +53,32 @@ public class RocketChatClientCallBuilder {
         } else {
             this.serverUrl = serverUrl + (serverUrl.endsWith("api") ? "/" : "/api/");
         }
-
+        this.oauth2Selected = false;
         this.user = user;
         this.password = password;
+        this.serviceName = "";
+        this.secret = "";
+        this.expiresIn = 0;
+        this.accessToken = "";
+        this.authToken = "";
+        this.userId = "";
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.objectMapper.setSerializationInclusion(Include.NON_NULL);
+    }
+    protected RocketChatClientCallBuilder(String serverUrl, String serviceName, String secret, int expiresIn, String accessToken) {
+        if (serverUrl.endsWith("/")) {
+            this.serverUrl = serverUrl + (serverUrl.endsWith("api/") ? "" : "api/");
+        } else {
+            this.serverUrl = serverUrl + (serverUrl.endsWith("api") ? "/" : "/api/");
+        }
+        this.oauth2Selected = true;
+        this.user = "";
+        this.password = "";
+        this.serviceName = serviceName;
+        this.secret = secret;
+        this.expiresIn = expiresIn;
+        this.accessToken = accessToken;
         this.authToken = "";
         this.userId = "";
         this.objectMapper = new ObjectMapper();
@@ -68,7 +95,8 @@ public class RocketChatClientCallBuilder {
     }
 
     protected RocketChatClientResponse buildCall(RocketChatRestApiV1 call, RocketChatQueryParams queryParams, Object body) throws IOException {
-        if (call.requiresAuth() && (authToken.isEmpty() || userId.isEmpty())) {
+
+        if (call.requiresAuth() && !oauth2Selected && (authToken.isEmpty() || userId.isEmpty())) {
         	login();
         	try {
 				byte[] digest = MessageDigest.getInstance("SHA-256").digest(password.trim().getBytes());
@@ -76,6 +104,9 @@ public class RocketChatClientCallBuilder {
 			} catch (NoSuchAlgorithmException e) {
 				throw new IOException("Could not generate sha256 password digest", e);
 			}
+        }
+        if (call.requiresAuth() && oauth2Selected && authToken.isEmpty()) {
+            loginWithOauth2();;
         }
 
         switch (call.getHttpMethod()) {
@@ -132,6 +163,36 @@ public class RocketChatClientCallBuilder {
 			throw new IOException("The login failed with a result of: " + loginResult.getStatus()
 				+ " (" + loginResult.getStatusText() + ")");
 		
+        JSONObject data = loginResult.getBody().getObject().getJSONObject("data");
+        this.authToken = data.getString("authToken");
+        this.userId = data.getString("userId");
+    }
+    private void loginWithOauth2() throws IOException {
+        HttpResponse<JsonNode> loginResult;
+
+        try {
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("serviceName",this.serviceName);
+            requestBody.put("secret",this.secret);
+            requestBody.put("expiresIn",this.expiresIn);
+            requestBody.put("accessToken", this.accessToken);
+
+            loginResult = Unirest.post(serverUrl + "v1/login")
+                    .header("Content-Type", "application/json")
+                    .body(requestBody.toString())
+                    .asJson();
+        } catch (UnirestException e) {
+            throw new IOException(e);
+        }
+
+        if (loginResult.getStatus() == 401)
+            throw new IOException("Unauthorized check ServiceName or Secret provided are correct!");
+
+
+        if (loginResult.getStatus() != 200)
+            throw new IOException("The login failed with a result of: " + loginResult.getStatus()
+                    + " (" + loginResult.getStatusText() + ")");
+
         JSONObject data = loginResult.getBody().getObject().getJSONObject("data");
         this.authToken = data.getString("authToken");
         this.userId = data.getString("userId");

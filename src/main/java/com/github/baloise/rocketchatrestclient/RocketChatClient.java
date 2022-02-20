@@ -32,6 +32,19 @@ public class RocketChatClient {
     private RocketChatRestApiV1Users users;
     private RocketChatRestApiV1Settings settings;
 
+    public RocketChatClient(String serverUrl,
+                            String serviceName,
+                            String secret,
+                            int expiresIn,
+                            String accessToken){
+        this.callBuilder = new RocketChatClientCallBuilder(serverUrl, serviceName, secret, expiresIn, accessToken);
+        this.channels = new RocketChatRestApiV1Channels(this.callBuilder);
+        this.chat = new RocketChatRestApiV1Chat(this.callBuilder);
+        this.groups = new RocketChatRestApiV1Groups(this.callBuilder);
+        this.users = new RocketChatRestApiV1Users(this.callBuilder);
+        this.settings = new RocketChatRestApiV1Settings(this.callBuilder);
+    }
+
     /**
      * Initialize a new instance of the client providing the server's url along
      * with username and password to use.

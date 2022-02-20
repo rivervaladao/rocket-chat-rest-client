@@ -50,7 +50,16 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
-
+			</plugins>
+			</build>
+<profiles>
+<profile>
+	<id>integration-test</id>
+	<activation>
+		<activeByDefault>false</activeByDefault>
+	</activation>
+<build>
+<plugins>
 			<plugin>
 				<groupId>io.fabric8</groupId>
 				<artifactId>docker-maven-plugin</artifactId>
@@ -174,7 +183,8 @@
 			</plugin>
 		</plugins>
 	</build>
-
+</profile>
+</profiles>
 	<distributionManagement>
 		<repository>
 			<id>repo-release</id>

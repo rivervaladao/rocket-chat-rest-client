@@ -20,6 +20,8 @@ import com.github.baloise.rocketchatrestclient.requests.CreateUserRequest;
 import com.github.baloise.rocketchatrestclient.requests.UpdateUserRequest;
 import com.github.baloise.rocketchatrestclient.requests.UserIdRequest;
 import com.github.baloise.rocketchatrestclient.requests.UpdateUserRequest.Data;
+import com.github.baloise.rocketchatrestclient.util.AdminLogin;
+import com.github.baloise.rocketchatrestclient.util.Oauth2Login;
 import com.github.baloise.rocketchatrestclient.util.TestConnectionInfo;
 
 /**
@@ -52,8 +54,7 @@ public class RocketChatClientTestIT {
 
 	@Before
 	public void setUp() throws Exception {
-		this.rc = new RocketChatClient(TestConnectionInfo.ServerUrl, TestConnectionInfo.User,
-				TestConnectionInfo.Password);
+		this.rc = AdminLogin.createClient();
 
 		assertNotNull("An error occured setting up Rocket.Chat Client, it is null.", this.rc);
 	}

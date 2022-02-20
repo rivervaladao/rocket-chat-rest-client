@@ -8,6 +8,7 @@ import org.junit.Ignore;
 
 import com.github.baloise.rocketchatrestclient.model.ServerInfo;
 import com.github.baloise.rocketchatrestclient.model.User;
+import com.github.baloise.rocketchatrestclient.util.Oauth2Login;
 
 @Ignore
 public class RocketChatClientTest {
@@ -15,10 +16,8 @@ public class RocketChatClientTest {
     
     @Before
     public void setUp() {
-        String serverUrl = "https://demo.rocket.chat/api/";
-        String user = "";
-        String password = "";
-        rc = new RocketChatClient(serverUrl, user, password);
+        //rc = BasicLogin.createClient();
+		rc = Oauth2Login.createClient();
     }
 
 	@Test
